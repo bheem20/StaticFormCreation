@@ -83,7 +83,7 @@ namespace DataMigrationForStaticForms.NTPFormCreation
 
             var existingMapping = await _dbContext
                 .DoorStepCustomFormIncludeWithMappings
-                .Where(x => x.IncludeWithId == CustomFormIncludesWithTypes.PostCAD && x.IsDeleted == false && x.TenantId == tenantId).OrderByDescending(x => x.CreationTime)
+                .Where(x => x.IncludeWithId == CustomFormIncludesWithTypes.NTP && x.IsDeleted == false && x.TenantId == tenantId).OrderByDescending(x => x.CreationTime)
                 .FirstOrDefaultAsync();
 
 
@@ -109,7 +109,7 @@ namespace DataMigrationForStaticForms.NTPFormCreation
 
                 var mapping = new DoorStepCustomFormIncludeWithMapping
                 {
-                    IncludeWithId = CustomFormIncludesWithTypes.PostCAD,
+                    IncludeWithId = CustomFormIncludesWithTypes.NTP,
                     FormId = doorStepPostCadCustomForm.Id,
                     TenantId = tenantId,
                 };
@@ -468,107 +468,6 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                     await _dbContext.SaveChangesAsync();
                 }
 
-                var equipmentConditionalFieldsToCreate = new List<DoorStepCustomFormSectionConditionalField>();
-                var equipmentConditionalOptionsToLink = new List<(DoorStepCustomFormSectionConditionalOption Option, string Title)>();
-
-
-                var equipmentConditionalDefinitions = new (
-                    string title,
-                    string type,
-                    bool isRequired,
-                    string triggerBinding,
-                    string triggerOptionValue,
-                    int controlTypeId,
-                    bool hasGlobalOptions)[]
-                {
-                    ("Why, if not?", DoorStepCustomControlTypeStrings.TextMultiLine, true, "Does the Panel count match the proposal?", ntpMappings.Where(x => x.Title == "Does the Panel count match the proposal?").Select(x => x.FalseOptionName).FirstOrDefault(), controlTypeIds.TextMultiLineId, false),
-                    ("Why, if not?", DoorStepCustomControlTypeStrings.TextMultiLine, true, "Does the panel type match the proposal?", ntpMappings.Where(x => x.Title == "Does the panel type match the proposal?").Select(x => x.FalseOptionName).FirstOrDefault(), controlTypeIds.TextMultiLineId, false),
-                    ("If String Inverter, does the number of optimizers match the number of panels?", DoorStepCustomControlTypeStrings.SelectButton, true, "What is the inverter type?", ntpMappings.Where(x => x.Title == "What is the inverter type?").Select(x => x.TrueOptionName).FirstOrDefault(), controlTypeIds.SelectButtonId, true),
-                    ("Why, if not?", DoorStepCustomControlTypeStrings.TextMultiLine, false, "What is the inverter type?", ntpMappings.Where(x => x.Title == "What is the inverter type?").Select(x => x.TrueOptionName).FirstOrDefault(), controlTypeIds.TextMultiLineId, false)
-                };
-
-
-                foreach (var def in equipmentConditionalDefinitions)
-                {
-
-
-                    if (!parentFieldIdMap.TryGetValue(def.triggerBinding, out int parentFieldId) || parentFieldId <= 0)
-                    {
-                        Console.WriteLine($"WARNING: Parent Field ID for {def.triggerBinding} is invalid or missing. Skipping conditional field {def.title}.");
-                        continue;
-                    }
-
-                    var conditionalKey = GetConditionalKey(def.title, parentFieldId.ToString());
-                    if (existingConditionalFieldMap.ContainsKey(conditionalKey)) continue;
-
-                    var triggerOptionEntity = await _dbContext.DoorStepCustomFormCustomControlTypeValues
-                        .FirstOrDefaultAsync(o =>
-                            o.SectionFieldId == parentFieldId &&
-                            o.Value == def.triggerOptionValue);
-
-                    if (triggerOptionEntity == null)
-                    {
-                        throw new InvalidOperationException($"FATAL: Trigger Option '{def.triggerOptionValue}' not found for Parent {def.triggerBinding}. Check if the option was saved correctly.");
-                    }
-
-                    var newConditionalField = new DoorStepCustomFormSectionConditionalField
-                    {
-                        TenantId = tenantId,
-                        Title = def.title,
-                        CreationTime = DateTime.Now,
-                        Order = orderCounter++,
-                        FieldType = 3,
-                        IsRequired = def.isRequired,
-                        Type = def.type,
-                        ParentId = triggerOptionEntity.Id,
-                        CustomControlTypeId = def.controlTypeId
-                    };
-                    equipmentConditionalFieldsToCreate.Add(newConditionalField);
-
-                    if (def.hasGlobalOptions && ntpMappingsDict.TryGetValue(def.title, out var optionsForBinding))
-                    {
-                        int optionOrderCounter = 1;
-
-                        if (!string.IsNullOrEmpty(optionsForBinding.FalseOptionName) || !string.IsNullOrWhiteSpace(optionsForBinding.FalseOptionName))
-                        {
-
-                            equipmentConditionalOptionsToLink.Add((new DoorStepCustomFormSectionConditionalOption
-                            {
-                                Value = optionsForBinding.FalseOptionName,
-                                Order = optionOrderCounter++,
-                                TenantId = tenantId,
-                            }, def.title));
-                        }
-
-                        if (!string.IsNullOrEmpty(optionsForBinding.TrueOptionName) || !string.IsNullOrWhiteSpace(optionsForBinding.TrueOptionName))
-                        {
-                            string controlValue = optionsForBinding.TrueOptionName;
-
-                            equipmentConditionalOptionsToLink.Add((new DoorStepCustomFormSectionConditionalOption
-                            {
-                                Value = optionsForBinding.TrueOptionName,
-                                Order = optionOrderCounter++,
-                                TenantId = tenantId,
-                            }, def.title));
-                        }
-                    }
-                }
-
-                if (equipmentConditionalFieldsToCreate.Any())
-                {
-                    await _dbContext.DoorStepCustomFormSectionConditionalFields.AddRangeAsync(equipmentConditionalFieldsToCreate);
-                    await _dbContext.SaveChangesAsync();
-
-                    var conditionalOptionsToSave = equipmentConditionalOptionsToLink
-                        .Select(t => { t.Option.ParentId = equipmentConditionalFieldsToCreate.Where(x => x.Title == "If String Inverter, does the number of optimizers match the number of panels?").Select(x => x.Id).FirstOrDefault(); return t.Option; })
-                        .ToList();
-
-                    if (conditionalOptionsToSave.Any())
-                    {
-                        await _dbContext.DoorStepCustomFormSectionConditionalOptions.AddRangeAsync(conditionalOptionsToSave);
-                        await _dbContext.SaveChangesAsync();
-                    }
-                }
             }
 
             if (secondaryCustomerSection != null && secondaryCustomerSectionId != 0)
@@ -837,7 +736,7 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                 var equipmentParentDefinitions = new (string title, string type, int fieldType, bool isRequired, int controlTypeId, CustomFormDataBindingEnum bindingEnum)[]
                 {
                     ("Panels", DoorStepCustomControlTypeStrings.TextSingleLine, 3,  true, controlTypeIds.TextSingleLineId, CustomFormDataBindingEnum.Panels),
-                    ("Inverter", DoorStepCustomControlTypeStrings.TextSingleLine, 3,  false, controlTypeIds.CurrencyId, CustomFormDataBindingEnum.Inverter),
+                    ("Inverter", DoorStepCustomControlTypeStrings.TextSingleLine, 3,  false, controlTypeIds.TextSingleLineId, CustomFormDataBindingEnum.AccountInverterName),
                     ("System Size", DoorStepCustomControlTypeStrings.Number, 3,  false, controlTypeIds.NumberId, CustomFormDataBindingEnum.SystemSize),
 
                 };
@@ -1006,7 +905,6 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                 }
 
             }
-
 
             if (utilityBillSection != null && utilityBillSectionId != 0)
             {
@@ -1411,6 +1309,15 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                     await _dbContext.SaveChangesAsync();                
                 }
            }
+
+            if (welcomeCallSection != null && welcomeCallSectionId != 0)
+            {
+                {
+                    // Similar logic for welcome call section fields and options can be implemented here, following the pattern established for the general and secondary customer sections.
+
+
+                }
+            }
 
         }
 

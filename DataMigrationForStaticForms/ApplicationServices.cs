@@ -1,4 +1,5 @@
-﻿using DataMigrationForStaticForms.GlobalOptions;
+﻿using DataMigrationForStaticForms.CustomFormControlTypes;
+using DataMigrationForStaticForms.GlobalOptions;
 using DataMigrationForStaticForms.NTPFormCreation;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -13,6 +14,7 @@ namespace DataMigrationForStaticForms
         {
             services.AddScoped<IBooleanMappingProvider, BooleanMappingProvider>();
             services.AddScoped<GlobalOptionConfigurtion>();
+            services.AddScoped<GetControlTypeService>();
             services.AddScoped<FormCreation>();
 
 

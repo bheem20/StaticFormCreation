@@ -1,6 +1,7 @@
 ﻿
 using Core365.EntityFrameworkCore;
 using DataMigrationForStaticForms;
+using DataMigrationForStaticForms.CustomFormControlTypes;
 using DataMigrationForStaticForms.GlobalOptions;
 using DataMigrationForStaticForms.NTPFormCreation;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,8 @@ public class Program
 
             var globalOptionConfigurtion = scope.ServiceProvider.GetRequiredService<GlobalOptionConfigurtion>();
 
+            var controlTypeService = scope.ServiceProvider.GetRequiredService<GetControlTypeService>();
+
             var tenantList = dbContext.Tenants.Where(x => x.IsActive && !x.IsDeleted).Select(x => x.Id).ToList();
 
             tenantList = tenantList.Where(x => x == 3).ToList();
@@ -49,8 +52,10 @@ public class Program
 
                 await globalOptionConfigurtion.MigrateAsync(tenantId, globalOptions);
 
+                var controlTypeIds = await controlTypeService.GetControlTypeValueIds(tenantId);
+
                 var formCreation = scope.ServiceProvider.GetRequiredService<FormCreation>();
-                formCreation.CreateForm();
+                await formCreation.CreateForms(tenantId, controlTypeIds);
             }
 
         }
