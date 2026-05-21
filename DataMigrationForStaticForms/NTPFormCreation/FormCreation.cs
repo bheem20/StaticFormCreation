@@ -852,7 +852,7 @@ namespace DataMigrationForStaticForms.NTPFormCreation
 
                 var addersParentDefinitions = new (string title, string type, int fieldType, bool isRequired, int controlTypeId, CustomFormDataBindingEnum bindingEnum)[]
                 {
-                    ("Total Adders", DoorStepCustomControlTypeStrings.Currency, 3,  true, controlTypeIds.CurrencyId, CustomFormDataBindingEnum.TotalAdders),
+                    ("Total Adders", DoorStepCustomControlTypeStrings.Currency, 3,  true, controlTypeIds.CurrencyId, CustomFormDataBindingEnum.AddersDetails),
                    
                 };
 
@@ -1162,7 +1162,7 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                         FieldType = def.fieldType,
                         IsRequired = def.isRequired,
                         Type = def.type,
-                        CustomControlTypeId = def.controlTypeId
+                        CustomControlTypeId = def.controlTypeId,
                     };
                     hoaInformationParentFieldsToCreate.Add(newField);
 
@@ -1239,8 +1239,6 @@ namespace DataMigrationForStaticForms.NTPFormCreation
 
                 foreach (var def in hoaInformationConditionalDefinitions)
                 {
-
-
                     if (!parentFieldIdMap.TryGetValue(def.triggerBinding, out int parentFieldId) || parentFieldId <= 0)
                     {
                         Console.WriteLine($"WARNING: Parent Field ID for {def.triggerBinding} is invalid or missing. Skipping conditional field {def.title}.");
@@ -1312,10 +1310,204 @@ namespace DataMigrationForStaticForms.NTPFormCreation
 
             if (welcomeCallSection != null && welcomeCallSectionId != 0)
             {
+                var existingWelcomeCallFields = await _dbContext.DoorStepCustomFormSectionFields
+                    .Where(x => x.TenantId == tenantId && x.SectionId == welcomeCallSectionId && x.IsDeleted == false)
+                    .ToListAsync();
+
+                var existingParentFieldIds = existingWelcomeCallFields.Select(f => f.Id).ToList();
+                var existingFieldMap = existingWelcomeCallFields.ToDictionary(f => f.Title, f => f.Id);
+                var parentFieldIdMap = existingFieldMap.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+                var validParentOptionIds = await _dbContext.DoorStepCustomFormCustomControlTypeValues
+                 .Where(o => existingParentFieldIds.Contains(o.SectionFieldId))
+                 .Select(o => o.Id)
+                 .ToListAsync();
+
+                var existingConditionalFields = await _dbContext.DoorStepCustomFormSectionConditionalFields
+                    .Include(x => x.ControlType)
+                    .Where(x => x.TenantId == tenantId && validParentOptionIds.Contains(x.ParentId) && x.IsDeleted == false)
+                    .ToListAsync();
+
+                var existingConditionalFieldMap = existingConditionalFields.ToDictionary(f => GetConditionalKey(f.Title, f.ControlType.SectionFieldId.ToString()), f => f.Id);
+
+                var welcomeCallParentFieldsToCreate = new List<DoorStepCustomFormSectionField>();
+                var welcomeCallOptionsToLink = new List<(DoorStepCustomFormCustomControlTypeValue Option, string title)>();
+
+                int orderCounter = existingWelcomeCallFields.Any() ? existingWelcomeCallFields.Max(f => f.Order) + 1 : 1;
+
+                var hoaInformationParentDefinitions = new (string title, string type, int fieldType, bool isRequired, int controlTypeId, CustomFormDataBindingEnum? enumValue)[]
                 {
-                    // Similar logic for welcome call section fields and options can be implemented here, following the pattern established for the general and secondary customer sections.
+                    ("Was the Welcome Call successfully completed with Callpilot?", DoorStepCustomControlTypeStrings.SelectButton, 3,  true, controlTypeIds.SelectButtonId, null),
+                    ("Review Welcome Call", DoorStepCustomControlTypeStrings.Button, 3,  true, controlTypeIds.ButtonId, CustomFormDataBindingEnum.ReviewRecording),
+                    ("Send To Sales Rep (Email)", DoorStepCustomControlTypeStrings.Button, 3,  true, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendToSalesRepEmail),
+                    ("Send To Homeowner (Email)", DoorStepCustomControlTypeStrings.Button, 3,  true, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendToHomeownerEmail),
+                    ("Send To Sales Rep (SMS)", DoorStepCustomControlTypeStrings.Button, 3,  true, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendToSalesRepSMS),
+                    ("Send To Homeowner (SMS)", DoorStepCustomControlTypeStrings.Button, 3,  true, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendToHomeownerSMS),
+                };
+
+                foreach (var def in hoaInformationParentDefinitions)
+                {
+                    if (existingFieldMap.ContainsKey(def.title))
+                    {
+                        parentFieldIdMap[def.title] = existingFieldMap[def.title];
+                        continue;
+                    }
+
+                    var newField = new DoorStepCustomFormSectionField
+                    {
+                        TenantId = tenantId,
+                        SectionId = welcomeCallSectionId,
+                        Title = def.title,
+                        CreationTime = DateTime.Now,
+                        Order = orderCounter++,
+                        FieldType = def.fieldType,
+                        IsRequired = def.isRequired,
+                        Type = def.type,
+                        CustomControlTypeId = def.controlTypeId,
+                        DataBinding = def.enumValue.HasValue ? def.enumValue.Value : (CustomFormDataBindingEnum?)null
+
+                    };
+                    welcomeCallParentFieldsToCreate.Add(newField);
+
+                    if ((def.type == DoorStepCustomControlTypeStrings.SelectButton || def.type == "Dropdown") && ntpMappingsDict.TryGetValue(def.title, out var optionsForField))
+                    {
+                        int optionOrderCounter = 1;
+
+                        if (optionsForField != null)
+                        {
+
+                            if (!string.IsNullOrEmpty(optionsForField.FalseOptionName) && !string.IsNullOrWhiteSpace(optionsForField.FalseOptionName))
+                            {
+                                welcomeCallOptionsToLink.Add((new DoorStepCustomFormCustomControlTypeValue
+                                {
+                                    Value = optionsForField.FalseOptionName,
+                                    Order = optionOrderCounter++,
+                                }, def.title));
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(optionsForField.TrueOptionName) && !string.IsNullOrEmpty(optionsForField.TrueOptionName))
+                            {
+                                welcomeCallOptionsToLink.Add((new DoorStepCustomFormCustomControlTypeValue
+                                {
+                                    Value = optionsForField.TrueOptionName,
+                                    Order = optionOrderCounter++,
+                                }, def.title));
+                            }
+
+                        }
+                    }
+                }
+
+                if (welcomeCallParentFieldsToCreate.Any())
+                {
+                    await _dbContext.DoorStepCustomFormSectionFields.AddRangeAsync(welcomeCallParentFieldsToCreate);
+                    await _dbContext.SaveChangesAsync();
+                    foreach (var field in welcomeCallParentFieldsToCreate) { parentFieldIdMap[field.Title] = field.Id; }
+                }
+
+                var optionsToSave = new List<DoorStepCustomFormCustomControlTypeValue>();
+                foreach (var (option, binding) in welcomeCallOptionsToLink)
+                {
+                    if (parentFieldIdMap.TryGetValue(binding, out var fieldId))
+                    {
+                        option.SectionFieldId = fieldId;
+                        optionsToSave.Add(option);
+                    }
+                }
+
+                if (optionsToSave.Any())
+                {
+                    await _dbContext.DoorStepCustomFormCustomControlTypeValues.AddRangeAsync(optionsToSave);
+                    await _dbContext.SaveChangesAsync();
+                }
+
+                var welcomeCallConditionalFieldsToCreate = new List<DoorStepCustomFormSectionConditionalField>();
+                var welcomeCallConditionalOptionsToLink = new List<(DoorStepCustomFormSectionConditionalOption Option, string Title)>();
 
 
+                var welcomeCallConditionalDefinitions = new (
+                    string title,
+                    string type,
+                    bool isRequired,
+                    string triggerBinding,
+                    string triggerOptionValue,
+                    int controlTypeId,
+                    bool hasGlobalOptions,
+                    CustomFormDataBindingEnum enumValue)[]
+                {
+                    ("Conduct by Phone", DoorStepCustomControlTypeStrings.Button, false, "Was the Welcome Call successfully completed with Callpilot?", ntpMappings.Where(x => x.Title == "Was the Welcome Call successfully completed with Callpilot?").Select(x => x.FalseOptionName).FirstOrDefault(), controlTypeIds.ButtonId, false, CustomFormDataBindingEnum.ConductByPhone),
+               };
+
+
+                foreach (var def in welcomeCallConditionalDefinitions)
+                {
+                    if (!parentFieldIdMap.TryGetValue(def.triggerBinding, out int parentFieldId) || parentFieldId <= 0)
+                    {
+                        Console.WriteLine($"WARNING: Parent Field ID for {def.triggerBinding} is invalid or missing. Skipping conditional field {def.title}.");
+                        continue;
+                    }
+
+                    var conditionalKey = GetConditionalKey(def.title, parentFieldId.ToString());
+                    if (existingConditionalFieldMap.ContainsKey(conditionalKey)) continue;
+
+                    var triggerOptionEntity = await _dbContext.DoorStepCustomFormCustomControlTypeValues
+                        .FirstOrDefaultAsync(o =>
+                            o.SectionFieldId == parentFieldId &&
+                            o.Value == def.triggerOptionValue);
+
+                    if (triggerOptionEntity == null)
+                    {
+                        throw new InvalidOperationException($"FATAL: Trigger Option '{def.triggerOptionValue}' not found for Parent {def.triggerBinding}. Check if the option was saved correctly.");
+                    }
+
+                    var newConditionalField = new DoorStepCustomFormSectionConditionalField
+                    {
+                        TenantId = tenantId,
+                        Title = def.title,
+                        CreationTime = DateTime.Now,
+                        Order = orderCounter++,
+                        FieldType = 3,
+                        IsRequired = def.isRequired,
+                        Type = def.type,
+                        ParentId = triggerOptionEntity.Id,
+                        CustomControlTypeId = def.controlTypeId,
+                        DataBinding = def.enumValue
+                    };
+                    welcomeCallConditionalFieldsToCreate.Add(newConditionalField);
+
+                    if (ntpMappingsDict.TryGetValue(def.title, out var optionsForBinding))
+                    {
+                        int optionOrderCounter = 1;
+
+                        if (!string.IsNullOrEmpty(optionsForBinding.FalseOptionName) || !string.IsNullOrWhiteSpace(optionsForBinding.FalseOptionName))
+                        {
+
+                            welcomeCallConditionalOptionsToLink.Add((new DoorStepCustomFormSectionConditionalOption
+                            {
+                                Value = optionsForBinding.FalseOptionName,
+                                Order = optionOrderCounter++,
+                                TenantId = tenantId,
+                            }, def.title));
+                        }
+
+                        if (!string.IsNullOrEmpty(optionsForBinding.TrueOptionName) || !string.IsNullOrWhiteSpace(optionsForBinding.TrueOptionName))
+                        {
+                            string controlValue = optionsForBinding.TrueOptionName;
+
+                            welcomeCallConditionalOptionsToLink.Add((new DoorStepCustomFormSectionConditionalOption
+                            {
+                                Value = optionsForBinding.TrueOptionName,
+                                Order = optionOrderCounter++,
+                                TenantId = tenantId,
+                            }, def.title));
+                        }
+                    }
+                }
+
+                if (welcomeCallConditionalFieldsToCreate.Any())
+                {
+                    await _dbContext.DoorStepCustomFormSectionConditionalFields.AddRangeAsync(welcomeCallConditionalFieldsToCreate);
+                    await _dbContext.SaveChangesAsync();
                 }
             }
 

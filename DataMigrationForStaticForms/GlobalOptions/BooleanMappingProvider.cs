@@ -15,7 +15,7 @@ namespace DataMigrationForStaticForms.GlobalOptions
             { 
                 new BooleanMappingConfigDtoWithNoBinding { Title = "Has utility bill been received?", TrueOptionName = "UB Present" , FalseOptionName = "UB Not Received" , HasExplicitFalse = true }, 
                 new BooleanMappingConfigDtoWithNoBinding { Title = "Does the Customer information match?", TrueOptionName = "UB Matches" , FalseOptionName = "UB Does Not Match" , HasExplicitFalse = true }, 
-                new BooleanMappingConfigDtoWithNoBinding { Title = "Does the Customer have an HOA?", TrueOptionName = "Has HOA" , FalseOptionName = "No HOA" , HasExplicitFalse = true },
+                new BooleanMappingConfigDtoWithNoBinding { Title = "Does the customer have an HOA?", TrueOptionName = "Has HOA" , FalseOptionName = "No HOA" , HasExplicitFalse = true },
                 new BooleanMappingConfigDtoWithNoBinding { Title = "Was the Welcome Call successfully completed with Callpilot?", TrueOptionName = "Yes" , FalseOptionName = "No" , HasExplicitFalse = true } ,
             };
         }
