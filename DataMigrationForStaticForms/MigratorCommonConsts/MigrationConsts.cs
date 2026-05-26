@@ -17,7 +17,7 @@ namespace DataMigrationForStaticForms.MigratorCommonConsts
             public const string DisplayText = "DisplayText";
             public const string TextSingleLine = "TextSingleLine";
             public const string TextMultiLine = "TextMultiLine";
-            public const string SSNInput = "SSNInput";
+            public const string SSNInput = "SSN";
             
 
             // Option Group
@@ -34,8 +34,8 @@ namespace DataMigrationForStaticForms.MigratorCommonConsts
             public const string Image = "Image";
             public const string Button = "Button";
             public const string RoofControl = "RoofControl";
-            public const string AdderControl = "AdderControl";
-            public const string AddressControl = "AddressControl";
+            public const string AdderControl = "Adders";
+            public const string AddressControl = "Address";
 
 
 

@@ -3,7 +3,6 @@ using Abp.Domain.Entities.Auditing;
 using Core365.DoorStep;
 using Core365.DoorStep.CustomForm;
 using Core365.EntityFrameworkCore;
-using Core365.RenewableEnergy;
 using Core365.RenewableEnergy.Account;
 using Core365.RenewableEnergy.CustomForm;
 using Core365.RenewableEnergy.CustomForm.REAccountCustomData;
@@ -126,12 +125,6 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                 .Where(x => x.TenantId == tenantId && !x.IsDeleted)
                 .ToListAsync();
 
-            // Process each section separately with dedicated functions
-            await ProcessGeneralSectionAsync(formFields, formId, tenantId, ntpData);
-            await ProcessSecondaryCustomerSectionAsync(formFields, formId, tenantId, ntpData);
-            await ProcessFinancingSectionAsync(formFields, formId, tenantId, ntpData);
-            await ProcessEquipmentSectionAsync(formFields, formId, tenantId, ntpData);
-            await ProcessAddersSectionAsync(formFields, formId, tenantId, ntpData);
             await ProcessUtilityBillSectionAsync(formFields, formId, tenantId, ntpData);
             await ProcessHOASectionAsync(formFields, formId, tenantId, ntpData);
             await ProcessWelcomeCallSectionAsync(formFields, formId, tenantId, ntpData);
@@ -140,206 +133,6 @@ namespace DataMigrationForStaticForms.NTPFormCreation
 
             _isBooleanOptionMapInitialized = false;
             Console.WriteLine($"--- NTP Data Migration Complete for Tenant ID: {tenantId} ---");
-        }
-
-        private async Task ProcessGeneralSectionAsync(
-            List<DoorStepCustomFormSectionField> formFields,
-            int formId,
-            int tenantId,
-            List<RenewableEnergyAccountNtp> ntpData)
-        {
-            Console.WriteLine("Processing General Section...");
-            var customFormsFieldToInsert = new List<RenewableEnergyCustomForm>();
-
-            foreach (var ntp in ntpData)
-            {
-                foreach (var mapping in _generalMapping)
-                {
-                    var formField = formFields.FirstOrDefault(f => f.Title == mapping.Title);
-                    if (formField == null) continue;
-
-                    var ntpValue = ntp.GetType().GetProperty(mapping.PropertyName)?.GetValue(ntp);
-                    if (ntpValue == null) continue;
-
-                    customFormsFieldToInsert.Add(new RenewableEnergyCustomForm
-                    {
-                        TenantId = tenantId,
-                        AccountId = ntp.AccountId,
-                        FormId = formId,
-                        CustomFormSectionFieldId = formField.Id,
-                        FormFieldName = formField.Title,
-                        Value = ntpValue.ToString(),
-                        CompletedDate = null,
-                        IsCompleted = false,
-                        CompletedByUserId = null,
-                    });
-                }
-            }
-
-            if (customFormsFieldToInsert.Any())
-            {
-                await InsertUniqueFieldsDataAsync(customFormsFieldToInsert, tenantId);
-            }
-        }
-
-        private async Task ProcessSecondaryCustomerSectionAsync(
-            List<DoorStepCustomFormSectionField> formFields,
-            int formId,
-            int tenantId,
-            List<RenewableEnergyAccountNtp> ntpData)
-        {
-            Console.WriteLine("Processing Secondary Customer Section...");
-            var customFormsFieldToInsert = new List<RenewableEnergyCustomForm>();
-
-            foreach (var ntp in ntpData)
-            {
-                foreach (var mapping in _secondaryCustomerMapping)
-                {
-                    var formField = formFields.FirstOrDefault(f => f.Title == mapping.Title);
-                    if (formField == null) continue;
-
-                    var ntpValue = ntp.GetType().GetProperty(mapping.PropertyName)?.GetValue(ntp);
-                    if (ntpValue == null) continue;
-
-                    customFormsFieldToInsert.Add(new RenewableEnergyCustomForm
-                    {
-                        TenantId = tenantId,
-                        AccountId = ntp.AccountId,
-                        FormId = formId,
-                        CustomFormSectionFieldId = formField.Id,
-                        FormFieldName = formField.Title,
-                        Value = ntpValue.ToString(),
-                        CompletedDate = null,
-                        IsCompleted = false,
-                        CompletedByUserId = null,
-                    });
-                }
-            }
-
-            if (customFormsFieldToInsert.Any())
-            {
-                await InsertUniqueFieldsDataAsync(customFormsFieldToInsert, tenantId);
-            }
-        }
-
-        private async Task ProcessFinancingSectionAsync(
-            List<DoorStepCustomFormSectionField> formFields,
-            int formId,
-            int tenantId,
-            List<RenewableEnergyAccountNtp> ntpData)
-        {
-            Console.WriteLine("Processing Financing Section...");
-            var customFormsFieldToInsert = new List<RenewableEnergyCustomForm>();
-
-            foreach (var ntp in ntpData)
-            {
-                foreach (var mapping in _financingMapping)
-                {
-                    var formField = formFields.FirstOrDefault(f => f.Title == mapping.Title);
-                    if (formField == null) continue;
-
-                    var ntpValue = ntp.GetType().GetProperty(mapping.PropertyName)?.GetValue(ntp);
-                    if (ntpValue == null) continue;
-
-                    customFormsFieldToInsert.Add(new RenewableEnergyCustomForm
-                    {
-                        TenantId = tenantId,
-                        AccountId = ntp.AccountId,
-                        FormId = formId,
-                        CustomFormSectionFieldId = formField.Id,
-                        FormFieldName = formField.Title,
-                        Value = ntpValue.ToString(),
-                        CompletedDate = null,
-                        IsCompleted = false,
-                        CompletedByUserId = null,
-                    });
-                }
-            }
-
-            if (customFormsFieldToInsert.Any())
-            {
-                await InsertUniqueFieldsDataAsync(customFormsFieldToInsert, tenantId);
-            }
-        }
-
-        private async Task ProcessEquipmentSectionAsync(
-            List<DoorStepCustomFormSectionField> formFields,
-            int formId,
-            int tenantId,
-            List<RenewableEnergyAccountNtp> ntpData)
-        {
-            Console.WriteLine("Processing Equipment Section...");
-            var customFormsFieldToInsert = new List<RenewableEnergyCustomForm>();
-
-            foreach (var ntp in ntpData)
-            {
-                foreach (var mapping in _equipmentMapping)
-                {
-                    var formField = formFields.FirstOrDefault(f => f.Title == mapping.Title);
-                    if (formField == null) continue;
-
-                    var ntpValue = ntp.GetType().GetProperty(mapping.PropertyName)?.GetValue(ntp);
-                    if (ntpValue == null) continue;
-
-                    customFormsFieldToInsert.Add(new RenewableEnergyCustomForm
-                    {
-                        TenantId = tenantId,
-                        AccountId = ntp.AccountId,
-                        FormId = formId,
-                        CustomFormSectionFieldId = formField.Id,
-                        FormFieldName = formField.Title,
-                        Value = ntpValue.ToString(),
-                        CompletedDate = null,
-                        IsCompleted = false,
-                        CompletedByUserId = null,
-                    });
-                }
-            }
-
-            if (customFormsFieldToInsert.Any())
-            {
-                await InsertUniqueFieldsDataAsync(customFormsFieldToInsert, tenantId);
-            }
-        }
-
-        private async Task ProcessAddersSectionAsync(
-            List<DoorStepCustomFormSectionField> formFields,
-            int formId,
-            int tenantId,
-            List<RenewableEnergyAccountNtp> ntpData)
-        {
-            Console.WriteLine("Processing Adders Section...");
-            var customFormsFieldToInsert = new List<RenewableEnergyCustomForm>();
-
-            foreach (var ntp in ntpData)
-            {
-                foreach (var mapping in _addersMapping)
-                {
-                    var formField = formFields.FirstOrDefault(f => f.Title == mapping.Title);
-                    if (formField == null) continue;
-
-                    var ntpValue = ntp.GetType().GetProperty(mapping.PropertyName)?.GetValue(ntp);
-                    if (ntpValue == null) continue;
-
-                    customFormsFieldToInsert.Add(new RenewableEnergyCustomForm
-                    {
-                        TenantId = tenantId,
-                        AccountId = ntp.AccountId,
-                        FormId = formId,
-                        CustomFormSectionFieldId = formField.Id,
-                        FormFieldName = formField.Title,
-                        Value = ntpValue.ToString(),
-                        CompletedDate = null,
-                        IsCompleted = false,
-                        CompletedByUserId = null,
-                    });
-                }
-            }
-
-            if (customFormsFieldToInsert.Any())
-            {
-                await InsertUniqueFieldsDataAsync(customFormsFieldToInsert, tenantId);
-            }
         }
 
         private async Task ProcessUtilityBillSectionAsync(
@@ -492,7 +285,7 @@ namespace DataMigrationForStaticForms.NTPFormCreation
 
                     if (trueOption != null)
                     {
-                        var conditionalFields = new[] { "Name", "Phone", "Email" };
+                        var conditionalFields = new[] { "Name", "Phone", "Email", "HOA Address" };
                         foreach (var fieldTitle in conditionalFields)
                         {
                             var conditionalField = trueOption.DoorStepCustomFormSectionConditionalFields
@@ -505,6 +298,14 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                                     "Name" => ntp.HoaName,
                                     "Phone" => ntp.HoaPhone,
                                     "Email" => ntp.HoaEmail,
+                                    "HOA Address" => JsonSerializer.Serialize(new
+                                    {
+                                        Address = ntp.HoaAddress,
+                                        AptSuite = ntp.HoaAptSuite,
+                                        City = ntp.HoaCity,
+                                        State = ntp.HoaState,
+                                        Zip = ntp.HoaZip
+                                    }),
                                     _ => null
                                 };
 
@@ -597,7 +398,7 @@ namespace DataMigrationForStaticForms.NTPFormCreation
 
                     if (trueOption != null)
                     {
-                        var conditionalFields = new[] { "Promises Made", "Date Sales Rep Notified by Email", "Date Sales Rep Notified by SMS", "Date Customer Notified by Email", "Date Customer Notified by SMS" };
+                        var conditionalFields = new[] { "Date Sales Rep Notified by Email", "Date Sales Rep Notified by SMS", "Date Customer Notified by Email", "Date Customer Notified by SMS" };
                         foreach (var fieldTitle in conditionalFields)
                         {
                             var conditionalField = trueOption.DoorStepCustomFormSectionConditionalFields
@@ -607,11 +408,30 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                             {
                                 string conditionalValue = fieldTitle switch
                                 {
-                                    "Promises Made" => ntp.WelcomeCallPromisesMade,
-                                    "Date Sales Rep Notified by Email" => ntp.WelcomeCallNotifiedSalesRepEmailDate?.ToString(),
-                                    "Date Sales Rep Notified by SMS" => ntp.WelcomeCallNotifiedSalesRepSmsDate?.ToString(),
-                                    "Date Customer Notified by Email" => ntp.WelcomeCallNotifiedCustomerEmailDate?.ToString(),
-                                    "Date Customer Notified by SMS" => ntp.WelcomeCallNotifiedCustomerSmsDate?.ToString(),
+                                    "Date Sales Rep Notified by Email" => JsonSerializer.Serialize(new
+                                    {
+                                        SentDate = ntp.WelcomeCallNotifiedSalesRepEmailDate,
+                                        IsSent = ntp.WelcomeCallNotifiedSalesRepEmailDate.HasValue
+                                    }),
+
+                                    "Date Sales Rep Notified by SMS" => JsonSerializer.Serialize(new
+                                    {
+                                        SentDate = ntp.WelcomeCallNotifiedSalesRepSmsDate,
+                                        IsSent = ntp.WelcomeCallNotifiedSalesRepSmsDate.HasValue
+                                    }),
+
+                                    "Date Customer Notified by Email" => JsonSerializer.Serialize(new
+                                    {
+                                        SentDate = ntp.WelcomeCallNotifiedCustomerEmailDate,
+                                        IsSent = ntp.WelcomeCallNotifiedCustomerEmailDate.HasValue
+                                    }),
+
+                                    "Date Customer Notified by SMS" => JsonSerializer.Serialize(new
+                                    {
+                                        SentDate = ntp.WelcomeCallNotifiedCustomerSmsDate,
+                                        IsSent = ntp.WelcomeCallNotifiedCustomerSmsDate.HasValue
+                                    }),
+
                                     _ => null
                                 };
 
@@ -783,31 +603,6 @@ namespace DataMigrationForStaticForms.NTPFormCreation
             }
         }
 
-        // Section Mappings
-        private static readonly List<NTPMigrationMapItemDto> _generalMapping = new List<NTPMigrationMapItemDto>
-        {
-            // Add General section field mappings
-        };
-
-        private static readonly List<NTPMigrationMapItemDto> _secondaryCustomerMapping = new List<NTPMigrationMapItemDto>
-        {
-            // Add Secondary Customer section field mappings
-        };
-
-        private static readonly List<NTPMigrationMapItemDto> _financingMapping = new List<NTPMigrationMapItemDto>
-        {
-            // Add Financing section field mappings
-        };
-
-        private static readonly List<NTPMigrationMapItemDto> _equipmentMapping = new List<NTPMigrationMapItemDto>
-        {
-            // Add Equipment section field mappings
-        };
-
-        private static readonly List<NTPMigrationMapItemDto> _addersMapping = new List<NTPMigrationMapItemDto>
-        {
-            // Add Adders section field mappings
-        };
 
         private static readonly List<NTPMigrationMapItemDto> _utilityBillMapping = new List<NTPMigrationMapItemDto>
         {

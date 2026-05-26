@@ -16,6 +16,8 @@ namespace DataMigrationForStaticForms
             services.AddScoped<GlobalOptionConfigurtion>();
             services.AddScoped<GetControlTypeService>();
             services.AddScoped<FormCreation>();
+            services.AddScoped<NTPDataMigrationFile>();
+            services.AddScoped<FormSectionMigration>();
 
 
             return services;

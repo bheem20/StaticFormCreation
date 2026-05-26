@@ -388,10 +388,16 @@ namespace DataMigrationForStaticForms.NTPFormCreation
 
                 int orderCounter = existingGeneralFields.Any() ? existingGeneralFields.Max(f => f.Order) + 1 : 1;
 
-                var generalParentDefinitions = new (string title, string type, int fieldType, bool isRequired, int controlTypeId)[]
+                var generalParentDefinitions = new (string title, string type, int fieldType, bool isRequired, int controlTypeId, CustomFormDataBindingEnum enumValue)[]
                 {
-                    ("First Name", DoorStepCustomControlTypeStrings.TextSingleLine, 3,  true, controlTypeIds.TextSingleLineId),
-                    ("Last Name", DoorStepCustomControlTypeStrings.TextSingleLine, 3,  true, controlTypeIds.TextSingleLineId),
+                    ("First Name", DoorStepCustomControlTypeStrings.TextSingleLine, 3,  true, controlTypeIds.TextSingleLineId, CustomFormDataBindingEnum.PrimaryCustomerFirstName),
+                    ("Last Name", DoorStepCustomControlTypeStrings.TextSingleLine, 3,  true, controlTypeIds.TextSingleLineId, CustomFormDataBindingEnum.PrimaryCustomerLastName),
+                    ("SSN", DoorStepCustomControlTypeStrings.SSNInput, 3,  true, controlTypeIds.SSNControlId, CustomFormDataBindingEnum.SSN),
+                    ("Date of Birth", DoorStepCustomControlTypeStrings.Date, 3,  true, controlTypeIds.DateControlId, CustomFormDataBindingEnum.DateOfBirth),
+                    ("Phone", DoorStepCustomControlTypeStrings.Phone, 3,  true, controlTypeIds.PhoneId, CustomFormDataBindingEnum.PrimaryCustomerPhoneNumber),
+                    ("Email", DoorStepCustomControlTypeStrings.Email, 3,  true, controlTypeIds.EmailId, CustomFormDataBindingEnum.PrimaryCustomerEmail),
+                    ("Customer Address", DoorStepCustomControlTypeStrings.AddressControl, 3,  true, controlTypeIds.AddressId, CustomFormDataBindingEnum.CustomerAddress),
+                    ("Copy From Lender", DoorStepCustomControlTypeStrings.Button, 3,  true, controlTypeIds.ButtonId, CustomFormDataBindingEnum.CopyFromLender),
                 };
 
                 foreach (var def in generalParentDefinitions)
@@ -412,7 +418,8 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                         FieldType = def.fieldType,
                         IsRequired = def.isRequired,
                         Type = def.type,
-                        CustomControlTypeId = def.controlTypeId
+                        CustomControlTypeId = def.controlTypeId,
+                        DataBinding = def.enumValue
                     };
                     generalParentFieldsToCreate.Add(newField);
 
@@ -618,7 +625,7 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                 var financingParentDefinitions = new (string title, string type, int fieldType, bool isRequired, int controlTypeId, CustomFormDataBindingEnum bindingEnum)[]
                 {
                     ("Has Financing been Approved", DoorStepCustomControlTypeStrings.SelectButton, 3,  true, controlTypeIds.SelectButtonId, CustomFormDataBindingEnum.HasFinancingBeenApproved),
-                    ("Financing Amoung", DoorStepCustomControlTypeStrings.Currency, 3,  false, controlTypeIds.CurrencyId, CustomFormDataBindingEnum.FinancingAmount),
+                    ("Financing Amount", DoorStepCustomControlTypeStrings.Currency, 3,  false, controlTypeIds.CurrencyId, CustomFormDataBindingEnum.FinancingAmount),
                     ("Gross Cost", DoorStepCustomControlTypeStrings.Currency, 3,  false, controlTypeIds.CurrencyId, CustomFormDataBindingEnum.GrossCost),
                     ("Dealers Fee", DoorStepCustomControlTypeStrings.Currency, 3,  false, controlTypeIds.CurrencyId, CustomFormDataBindingEnum.DealerFee),
 
@@ -852,7 +859,7 @@ namespace DataMigrationForStaticForms.NTPFormCreation
 
                 var addersParentDefinitions = new (string title, string type, int fieldType, bool isRequired, int controlTypeId, CustomFormDataBindingEnum bindingEnum)[]
                 {
-                    ("Total Adders", DoorStepCustomControlTypeStrings.Currency, 3,  true, controlTypeIds.CurrencyId, CustomFormDataBindingEnum.AddersDetails),
+                    ("Adders", DoorStepCustomControlTypeStrings.AdderControl, 3,  true, controlTypeIds.AdderControlId, CustomFormDataBindingEnum.AddersDetails),
                    
                 };
 
@@ -1234,6 +1241,7 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                     ("Name", DoorStepCustomControlTypeStrings.TextSingleLine, true, "Does the customer have an HOA?", ntpMappings.Where(x => x.Title == "Does the customer have an HOA?").Select(x => x.TrueOptionName).FirstOrDefault(), controlTypeIds.TextSingleLineId, false),
                     ("Phone", DoorStepCustomControlTypeStrings.Phone, true, "Does the customer have an HOA?", ntpMappings.Where(x => x.Title == "Does the customer have an HOA?").Select(x => x.TrueOptionName).FirstOrDefault(), controlTypeIds.PhoneId, false),
                     ("Email", DoorStepCustomControlTypeStrings.Email, true, "Does the customer have an HOA?", ntpMappings.Where(x => x.Title == "Does the customer have an HOA?").Select(x => x.TrueOptionName).FirstOrDefault(), controlTypeIds.EmailId, false),
+                    ("HOA Address", DoorStepCustomControlTypeStrings.AddressControl, true, "Does the customer have an HOA?", ntpMappings.Where(x => x.Title == "Does the customer have an HOA?").Select(x => x.TrueOptionName).FirstOrDefault(), controlTypeIds.AddressId, false),
                 };
 
 
@@ -1343,6 +1351,8 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                     ("Send To Homeowner (Email)", DoorStepCustomControlTypeStrings.Button, 3,  true, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendToHomeownerEmail),
                     ("Send To Sales Rep (SMS)", DoorStepCustomControlTypeStrings.Button, 3,  true, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendToSalesRepSMS),
                     ("Send To Homeowner (SMS)", DoorStepCustomControlTypeStrings.Button, 3,  true, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendToHomeownerSMS),
+                    ("Promise Made", DoorStepCustomControlTypeStrings.TextMultiLine, 3,  true, controlTypeIds.TextMultiLineId, CustomFormDataBindingEnum.PromiseMadeActivityNotes),
+                    ("Promise Made", DoorStepCustomControlTypeStrings.Button, 3,  true, controlTypeIds.ButtonId, CustomFormDataBindingEnum.PromiseMade),
                 };
 
                 foreach (var def in hoaInformationParentDefinitions)

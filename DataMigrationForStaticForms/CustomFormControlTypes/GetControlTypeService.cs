@@ -27,6 +27,11 @@ namespace DataMigrationForStaticForms.CustomFormControlTypes
             public int EmailId { get; set; }
             public int CurrencyId { get; set; }
             public int NumberId { get; set; }
+            public int AddressId { get; set; }
+            public int AdderControlId { get; set; }
+            public int DateControlId { get; set; }
+            public int SSNControlId { get; set; }
+
         }
 
         public async Task<ControlTypeIdsDto> GetControlTypeValueIds(int tenantId)
@@ -72,7 +77,18 @@ namespace DataMigrationForStaticForms.CustomFormControlTypes
                             throw new InvalidOperationException("Critical control type 'Currency' not found in the database."),
 
                 NumberId = controlTypes.FirstOrDefault(t => t.Type == MigrationConsts.DoorStepCustomControlTypeStrings.Number)?.Id ?? 
-                            throw new InvalidOperationException("Critical control type 'Number' not found in the database.")
+                            throw new InvalidOperationException("Critical control type 'Number' not found in the database."),
+
+                AdderControlId = controlTypes.FirstOrDefault(t => t.Type == MigrationConsts.DoorStepCustomControlTypeStrings.AdderControl)?.Id ??
+                                throw new InvalidOperationException("Critical control type 'Adder Control' not found in the database."),
+                AddressId = controlTypes.FirstOrDefault(t => t.Type == MigrationConsts.DoorStepCustomControlTypeStrings.AddressControl)?.Id ??
+                            throw new InvalidOperationException("Critical control type 'Address Control' not found in the database."),
+                DateControlId = controlTypes.FirstOrDefault(t => t.Type == MigrationConsts.DoorStepCustomControlTypeStrings.Date)?.Id ??
+                        throw new InvalidOperationException("Critical control type 'Date Control' not found in the database."),
+                SSNControlId = controlTypes.FirstOrDefault(t => t.Type == MigrationConsts.DoorStepCustomControlTypeStrings.SSNInput)?.Id ??
+                throw new InvalidOperationException("Critical control type 'SSN Control' not found in the database."),
+
+
             };
 
             return dto;
