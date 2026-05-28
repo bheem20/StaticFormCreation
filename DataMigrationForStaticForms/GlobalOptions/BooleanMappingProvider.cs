@@ -24,7 +24,7 @@ namespace DataMigrationForStaticForms.GlobalOptions
         {
             return new List<BooleanMapConfigDto>
             {
-                new() { Binding = CustomFormDataBindingEnum.HasFinancingBeenApproved, TrueOptionName = "Financing Approved", FalseOptionName = "Financing Not Approved" },
+                new() { Binding = CustomFormDataBindingEnum.HasFinancingBeenApproved, TrueOptionName = "Approved", FalseOptionName = "Not Approved" },
             };
 
         }

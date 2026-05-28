@@ -54,8 +54,15 @@ public class Program
 
                 var controlTypeIds = await controlTypeService.GetControlTypeValueIds(tenantId);
 
+
+
                 var formCreation = scope.ServiceProvider.GetRequiredService<FormCreation>();
+                var ntpDataMigrationFile = scope.ServiceProvider.GetRequiredService<NTPDataMigrationFile>();
+                var sectionMigration = scope.ServiceProvider.GetRequiredService<FormSectionMigration>();
                 await formCreation.CreateForms(tenantId, controlTypeIds);
+
+                await ntpDataMigrationFile.ExecuteAsync(tenantId, globalOptions);
+                await sectionMigration.MigrateNTPSectionsToCustomFormSections(tenantId);
             }
 
         }

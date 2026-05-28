@@ -300,11 +300,11 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                                     "Email" => ntp.HoaEmail,
                                     "HOA Address" => JsonSerializer.Serialize(new
                                     {
-                                        Address = ntp.HoaAddress,
-                                        AptSuite = ntp.HoaAptSuite,
+                                        Address1 = ntp.HoaAddress,
+                                        AptOrSuite = ntp.HoaAptSuite,
                                         City = ntp.HoaCity,
-                                        State = ntp.HoaState,
-                                        Zip = ntp.HoaZip
+                                        StateCode = ntp.HoaState,
+                                        PostalCode = ntp.HoaZip
                                     }),
                                     _ => null
                                 };

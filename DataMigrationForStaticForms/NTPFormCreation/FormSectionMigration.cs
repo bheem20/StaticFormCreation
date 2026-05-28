@@ -16,7 +16,7 @@ namespace DataMigrationForStaticForms.NTPFormCreation
             _core365DbContext = core365DbContext;
         }
 
-        private async Task MigrateNTPSectionsToCustomFormSections(int tenantId)
+        public async Task MigrateNTPSectionsToCustomFormSections(int tenantId)
         {
             var type = CustomFormIncludesWithTypes.NTP;
 
