@@ -9,6 +9,7 @@ using Core365.RenewableEnergy.CustomForm.REAccountCustomData;
 using DataMigrationForStaticForms.GlobalOptions;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using static System.Net.WebRequestMethods;
 
 namespace DataMigrationForStaticForms.NTPFormCreation
 {
@@ -391,66 +392,66 @@ namespace DataMigrationForStaticForms.NTPFormCreation
 
                 // Handle conditional fields for Welcome Call
                 var parentField = formFields.FirstOrDefault(x => x.Title == "Was Welcome Call completed?");
-                if (parentField != null && ntp.IsWelcomeCallPresent == true)
-                {
-                    var trueOption = parentField.DoorStepCustomFormCustomControlTypeValues
-                        .FirstOrDefault(o => o.Value == ntpMappings.First(m => m.Title == "Was Welcome Call completed?").TrueOptionName);
+                //if (parentField != null && ntp.IsWelcomeCallPresent == true)
+                //{
+                //    var trueOption = parentField.DoorStepCustomFormCustomControlTypeValues
+                //        .FirstOrDefault(o => o.Value == ntpMappings.First(m => m.Title == "Was Welcome Call completed?").TrueOptionName);
 
-                    if (trueOption != null)
-                    {
-                        var conditionalFields = new[] { "Date Sales Rep Notified by Email", "Date Sales Rep Notified by SMS", "Date Customer Notified by Email", "Date Customer Notified by SMS" };
-                        foreach (var fieldTitle in conditionalFields)
-                        {
-                            var conditionalField = trueOption.DoorStepCustomFormSectionConditionalFields
-                                .FirstOrDefault(x => x.Title == fieldTitle);
+                //    if (trueOption != null)
+                //    {
+                //        var conditionalFields = new[] { "Date Sales Rep Notified by Email", "Date Sales Rep Notified by SMS", "Date Customer Notified by Email", "Date Customer Notified by SMS" };
+                //        foreach (var fieldTitle in conditionalFields)
+                //        {
+                //            var conditionalField = trueOption.DoorStepCustomFormSectionConditionalFields
+                //                .FirstOrDefault(x => x.Title == fieldTitle);
 
-                            if (conditionalField != null)
-                            {
-                                string conditionalValue = fieldTitle switch
-                                {
-                                    "Date Sales Rep Notified by Email" => JsonSerializer.Serialize(new
-                                    {
-                                        SentDate = ntp.WelcomeCallNotifiedSalesRepEmailDate,
-                                        IsSent = ntp.WelcomeCallNotifiedSalesRepEmailDate.HasValue
-                                    }),
+                //            if (conditionalField != null)
+                //            {
+                //                string conditionalValue = fieldTitle switch
+                //                {
+                //                    "Date Sales Rep Notified by Email" => JsonSerializer.Serialize(new
+                //                    {
+                //                        SentDate = ntp.WelcomeCallNotifiedSalesRepEmailDate,
+                //                        IsSent = ntp.WelcomeCallNotifiedSalesRepEmailDate.HasValue
+                //                    }),
 
-                                    "Date Sales Rep Notified by SMS" => JsonSerializer.Serialize(new
-                                    {
-                                        SentDate = ntp.WelcomeCallNotifiedSalesRepSmsDate,
-                                        IsSent = ntp.WelcomeCallNotifiedSalesRepSmsDate.HasValue
-                                    }),
+                //                    "Date Sales Rep Notified by SMS" => JsonSerializer.Serialize(new
+                //                    {
+                //                        SentDate = ntp.WelcomeCallNotifiedSalesRepSmsDate,
+                //                        IsSent = ntp.WelcomeCallNotifiedSalesRepSmsDate.HasValue
+                //                    }),
 
-                                    "Date Customer Notified by Email" => JsonSerializer.Serialize(new
-                                    {
-                                        SentDate = ntp.WelcomeCallNotifiedCustomerEmailDate,
-                                        IsSent = ntp.WelcomeCallNotifiedCustomerEmailDate.HasValue
-                                    }),
+                //                    "Date Customer Notified by Email" => JsonSerializer.Serialize(new
+                //                    {
+                //                        SentDate = ntp.WelcomeCallNotifiedCustomerEmailDate,
+                //                        IsSent = ntp.WelcomeCallNotifiedCustomerEmailDate.HasValue
+                //                    }),
 
-                                    "Date Customer Notified by SMS" => JsonSerializer.Serialize(new
-                                    {
-                                        SentDate = ntp.WelcomeCallNotifiedCustomerSmsDate,
-                                        IsSent = ntp.WelcomeCallNotifiedCustomerSmsDate.HasValue
-                                    }),
+                //                    "Date Customer Notified by SMS" => JsonSerializer.Serialize(new
+                //                    {
+                //                        SentDate = ntp.WelcomeCallNotifiedCustomerSmsDate,
+                //                        IsSent = ntp.WelcomeCallNotifiedCustomerSmsDate.HasValue
+                //                    }),
 
-                                    _ => null
-                                };
+                //                    _ => null
+                //                };
 
-                                if (!string.IsNullOrEmpty(conditionalValue))
-                                {
-                                    customFormsConditionalFieldsToInsert.Add(new RenewableEnergyCustomFormConditionalValue
-                                    {
-                                        TenantId = tenantId,
-                                        AccountId = ntp.AccountId,
-                                        FormId = formId,
-                                        ParentId = parentField.Id,
-                                        Value = conditionalValue,
-                                        ConditionalFieldId = conditionalField.Id,
-                                    });
-                                }
-                            }
-                        }
-                    }
-                }
+                //                if (!string.IsNullOrEmpty(conditionalValue))
+                //                {
+                //                    customFormsConditionalFieldsToInsert.Add(new RenewableEnergyCustomFormConditionalValue
+                //                    {
+                //                        TenantId = tenantId,
+                //                        AccountId = ntp.AccountId,
+                //                        FormId = formId,
+                //                        ParentId = parentField.Id,
+                //                        Value = conditionalValue,
+                //                        ConditionalFieldId = conditionalField.Id,
+                //                    });
+                //                }
+                //            }
+                //        }
+                //    }
+                //}
             }
 
             if (customFormsFieldToInsert.Any())
@@ -479,58 +480,6 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                 // Migrate standard bindings
                 PivotAndAddData(newCustomData, item, _databindingNTPMapping, item.AccountId, item.CreationTime);
 
-                // Migrate complex JSON data
-                var welcomeCallDataObject = new
-                {
-                    item.IsWelcomeCallPresent,
-                    item.WelcomeCallPromisesMade,
-                    item.WelcomeCallNotifiedSalesRepEmailDate,
-                    item.WelcomeCallNotifiedSalesRepSmsDate,
-                    item.WelcomeCallNotifiedCustomerEmailDate,
-                    item.WelcomeCallNotifiedCustomerSmsDate
-                };
-
-                if (item.IsWelcomeCallPresent.HasValue || !string.IsNullOrWhiteSpace(item.WelcomeCallPromisesMade))
-                {
-                    string jsonValue = JsonSerializer.Serialize(welcomeCallDataObject);
-                    newCustomData.Add(new RenewableEnergyAccountCustomData
-                    {
-                        TenantId = tenantId,
-                        AccountId = item.AccountId,
-                        Value = jsonValue,
-                        CreationTime = item.CreationTime,
-                        CreatorUserId = item.CreatorUserId,
-                        IsDeleted = false
-                    });
-                }
-
-                // Migrate HOA data as JSON
-                var hoaDataObject = new
-                {
-                    item.IsHoaPresent,
-                    item.HoaName,
-                    item.HoaPhone,
-                    item.HoaEmail,
-                    item.HoaAddress,
-                    item.HoaAptSuite,
-                    item.HoaCity,
-                    item.HoaState,
-                    item.HoaZip
-                };
-
-                if (item.IsHoaPresent || !string.IsNullOrWhiteSpace(item.HoaName))
-                {
-                    string jsonValue = JsonSerializer.Serialize(hoaDataObject);
-                    newCustomData.Add(new RenewableEnergyAccountCustomData
-                    {
-                        TenantId = tenantId,
-                        AccountId = item.AccountId,
-                        Value = jsonValue,
-                        CreationTime = item.CreationTime,
-                        CreatorUserId = item.CreatorUserId,
-                        IsDeleted = false
-                    });
-                }
             }
 
             await InsertUniqueDataAsync(newCustomData, tenantId);
@@ -620,20 +569,18 @@ namespace DataMigrationForStaticForms.NTPFormCreation
 
         private static readonly List<NTPMigrationMapItemDto> _welcomeCallMapping = new List<NTPMigrationMapItemDto>
         {
-            new NTPMigrationMapItemDto(nameof(RenewableEnergyAccountNtp.IsWelcomeCallPresent), "Was Welcome Call completed?", 1, true, ""),
-            new NTPMigrationMapItemDto(nameof(RenewableEnergyAccountNtp.WelcomeCallPromisesMade), "Promises Made", 2, false, "Was Welcome Call completed?"),
-            new NTPMigrationMapItemDto(nameof(RenewableEnergyAccountNtp.WelcomeCallNotifiedSalesRepEmailDate), "Date Sales Rep Notified by Email", 3, false, "Was Welcome Call completed?"),
-            new NTPMigrationMapItemDto(nameof(RenewableEnergyAccountNtp.WelcomeCallNotifiedSalesRepSmsDate), "Date Sales Rep Notified by SMS", 4, false, "Was Welcome Call completed?"),
-            new NTPMigrationMapItemDto(nameof(RenewableEnergyAccountNtp.WelcomeCallNotifiedCustomerEmailDate), "Date Customer Notified by Email", 5, false, "Was Welcome Call completed?"),
-            new NTPMigrationMapItemDto(nameof(RenewableEnergyAccountNtp.WelcomeCallNotifiedCustomerSmsDate), "Date Customer Notified by SMS", 6, false, "Was Welcome Call completed?"),
-            new NTPMigrationMapItemDto(nameof(RenewableEnergyAccountNtp.Notes), "", 7, true, ""),
+            new NTPMigrationMapItemDto(nameof(RenewableEnergyAccountNtp.IsWelcomeCallPresent), "Was the Welcome Call successfully completed with Callpilot?", 1, true, ""),
         };
 
         // Data Binding Mappings
         private static readonly List<MigrationMapItemDto> _databindingNTPMapping = new List<MigrationMapItemDto>
         {
-            new MigrationMapItemDto(nameof(RenewableEnergyAccountNtp.Notes), CustomFormDataBindingEnum.AccessibleAttic),
+            //    new MigrationMapItemDto(nameof(RenewableEnergyAccountNtp.WelcomeCallNotifiedSalesRepEmailDate), CustomFormDataBindingEnum.SendToSalesRepEmail),
+            //    new MigrationMapItemDto(nameof(RenewableEnergyAccountNtp.WelcomeCallNotifiedSalesRepSmsDate), CustomFormDataBindingEnum.SendToSalesRepSMS),
+            //    new MigrationMapItemDto(nameof(RenewableEnergyAccountNtp.WelcomeCallNotifiedCustomerEmailDate), CustomFormDataBindingEnum.SendToHomeownerEmail),
+            //    new MigrationMapItemDto(nameof(RenewableEnergyAccountNtp.WelcomeCallNotifiedCustomerSmsDate), CustomFormDataBindingEnum.SendToHomeownerSMS),
         };
+
 
         private void PivotAndAddData<TSource>(
             List<RenewableEnergyAccountCustomData> targetList,
@@ -643,6 +590,10 @@ namespace DataMigrationForStaticForms.NTPFormCreation
             DateTime creationTime) where TSource : class
         {
             var sourceType = typeof(TSource);
+
+            // Extract auditing data up-front using your interfaces
+            int tenantId = (sourceItem as IMustHaveTenant)?.TenantId ?? default(int);
+            long? creatorUserId = (sourceItem as ICreationAudited)?.CreatorUserId;
 
             foreach (var mapItem in map)
             {
@@ -654,65 +605,157 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                 }
 
                 var value = propInfo.GetValue(sourceItem);
+                string stringValue;
 
-                if (value != null)
+                // Check if the property has a valid DateTime value
+                if (value is DateTime dateTimeValue)
                 {
-                    var auditingItem = new
+                    stringValue = JsonSerializer.Serialize(new
                     {
-                        TenantId = (sourceItem as IMustHaveTenant)?.TenantId ?? default(int),
-                        CreatorUserId = (sourceItem as ICreationAudited)?.CreatorUserId,
-                        AccountId = accountId
-                    };
-
-                    AddCustomData(targetList, auditingItem, mapItem.Binding.Value, value, creationTime);
+                        SentDate = (DateTime?)dateTimeValue,
+                        IsSent = true
+                    });
                 }
+                else
+                {
+                    // If it's null (or not a DateTime), serialize empty/false values
+                    stringValue = JsonSerializer.Serialize(new
+                    {
+                        SentDate = (DateTime?)null,
+                        IsSent = false
+                    });
+                }
+
+                // Add the record to the target list
+                targetList.Add(new RenewableEnergyAccountCustomData
+                {
+                    TenantId = tenantId,
+                    AccountId = accountId,
+                    CustomFormDataBinding = mapItem.Binding.Value,
+                    Value = stringValue,
+                    CreationTime = creationTime,
+                    CreatorUserId = creatorUserId,
+                    IsDeleted = false
+                });
             }
         }
 
-        private void AddCustomData(List<RenewableEnergyAccountCustomData> targetList, object sourceItem, CustomFormDataBindingEnum binding, object value, DateTime creationTime)
-        {
-            if (value == null) return;
+        //private void PivotAndAddData<TSource>(
+        //    List<RenewableEnergyAccountCustomData> targetList,
+        //    TSource sourceItem,
+        //    List<MigrationMapItemDto> map,
+        //    int accountId,
+        //    DateTime creationTime) where TSource : class
+        //{
+        //    var sourceType = typeof(TSource);
 
-            string stringValue = value.ToString();
+        //    foreach (var mapItem in map)
+        //    {
+        //        var propInfo = sourceType.GetProperty(mapItem.PropertyName);
+        //        if (propInfo == null)
+        //        {
+        //            Console.WriteLine($"WARNING: Property '{mapItem.PropertyName}' not found on entity '{sourceType.Name}'. Skipping binding {mapItem.Binding}.");
+        //            continue;
+        //        }
 
-            if (binding == CustomFormDataBindingEnum.CompanyApprovalOverride)
-            {
-                if (value is bool booleanValue)
-                {
-                    if (_customBooleanIdMappings.TryGetValue(binding, out var mapping))
-                    {
-                        stringValue = booleanValue ? mapping.TrueOptionId.ToString() : mapping.FalseOptionId.ToString();
-                    }
-                    else
-                    {
-                        stringValue = null;
-                    }
-                }
-            }
-            else
-            {
-                stringValue = value.ToString();
-            }
+        //        var value = propInfo.GetValue(sourceItem);
 
-            if (string.IsNullOrEmpty(stringValue)) return;
+        //        if (value != null)
+        //        {
+        //            var auditingItem = new
+        //            {
+        //                TenantId = (sourceItem as IMustHaveTenant)?.TenantId ?? default(int),
+        //                CreatorUserId = (sourceItem as ICreationAudited)?.CreatorUserId,
+        //                AccountId = accountId
+        //            };
 
-            int tenantId = (int)sourceItem.GetType().GetProperty("TenantId").GetValue(sourceItem);
-            long? creatorUserId = (long?)sourceItem.GetType().GetProperty("CreatorUserId").GetValue(sourceItem);
-            int accountId = (int)sourceItem.GetType().GetProperty("AccountId").GetValue(sourceItem);
+        //            AddCustomData(targetList, auditingItem, mapItem.Binding.Value, value, creationTime);
+        //        }
+        //    }
+        //}
 
-            var accountCustomData = new RenewableEnergyAccountCustomData
-            {
-                TenantId = tenantId,
-                AccountId = accountId,
-                CustomFormDataBinding = binding,
-                Value = stringValue,
-                CreationTime = creationTime,
-                CreatorUserId = creatorUserId,
-                IsDeleted = false
-            };
+        //private void AddCustomData(List<RenewableEnergyAccountCustomData> targetList, object sourceItem, CustomFormDataBindingEnum binding, object value, DateTime creationTime)
+        //{
+        //    string stringValue = "";
+        //    switch(binding)
+        //    {
+        //        case CustomFormDataBindingEnum.SendToHomeownerSMS:
+        //        case CustomFormDataBindingEnum.SendToHomeownerEmail:
+        //        case CustomFormDataBindingEnum.SendToSalesRepSMS:
+        //        case CustomFormDataBindingEnum.SendToSalesRepEmail:
 
-            targetList.Add(accountCustomData);
-        }
+        //            break;
+        //    }
+
+
+        //    stringValue = binding switch
+        //    {
+        //        CustomFormDataBindingEnum.SendToHomeownerSMS => JsonSerializer.Serialize(new
+        //        {
+        //            SentDate = value,
+        //            IsSent = 
+        //        }),
+
+        //        CustomFormDataBindingEnum.SendToHomeownerSMS => JsonSerializer.Serialize(new
+        //        {
+        //            SentDate = ntp.WelcomeCallNotifiedSalesRepSmsDate,
+        //            IsSent = ntp.WelcomeCallNotifiedSalesRepSmsDate.HasValue
+        //        }),
+
+        //        CustomFormDataBindingEnum.SendToHomeownerSMS => JsonSerializer.Serialize(new
+        //        {
+        //            SentDate = ntp.WelcomeCallNotifiedCustomerEmailDate,
+        //            IsSent = ntp.WelcomeCallNotifiedCustomerEmailDate.HasValue
+        //        }),
+
+        //        CustomFormDataBindingEnum.SendToHomeownerSMS => JsonSerializer.Serialize(new
+        //        {
+        //            SentDate = ntp.WelcomeCallNotifiedCustomerSmsDate,
+        //            IsSent = ntp.WelcomeCallNotifiedCustomerSmsDate.HasValue
+        //        }),
+
+        //        _ => null
+        //    };
+
+
+        //    if (binding == CustomFormDataBindingEnum.SendToHomeownerSMS ||  bin)
+        //    {
+        //        if (value is bool booleanValue)
+        //        {
+        //            if (_customBooleanIdMappings.TryGetValue(binding, out var mapping))
+        //            {
+        //                stringValue = booleanValue ? mapping.TrueOptionId.ToString() : mapping.FalseOptionId.ToString();
+        //            }
+        //            else
+        //            {
+        //                stringValue = null;
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        stringValue = value.ToString();
+        //    }
+
+        //    if (string.IsNullOrEmpty(stringValue)) return;
+
+        //    int tenantId = (int)sourceItem.GetType().GetProperty("TenantId").GetValue(sourceItem);
+        //    long? creatorUserId = (long?)sourceItem.GetType().GetProperty("CreatorUserId").GetValue(sourceItem);
+        //    int accountId = (int)sourceItem.GetType().GetProperty("AccountId").GetValue(sourceItem);
+
+        //    var accountCustomData = new RenewableEnergyAccountCustomData
+        //    {
+        //        TenantId = tenantId,
+        //        AccountId = accountId,
+        //        CustomFormDataBinding = binding,
+        //        Value = stringValue,
+        //        CreationTime = creationTime,
+        //        CreatorUserId = creatorUserId,
+        //        IsDeleted = false
+        //    };
+
+        //    targetList.Add(accountCustomData);
+        //}
 
         private async Task InsertUniqueDataAsync(List<RenewableEnergyAccountCustomData> newCustomData, int tenantId)
         {

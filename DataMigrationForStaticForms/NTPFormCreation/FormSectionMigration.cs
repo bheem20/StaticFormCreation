@@ -222,27 +222,49 @@ namespace DataMigrationForStaticForms.NTPFormCreation
 
             _core365DbContext.RenewableEnergyCustomFormSections.AddRange(sectionsToActuallyInsert);
 
-            var existingFormKeys = await _core365DbContext.RenewableEnergyCustomForms
+            // 1. Fetch existing form entities matching the UI (No OrderBy = Default DB Order)
+            var existingFormsMap = await _core365DbContext.RenewableEnergyCustomForms
                 .Where(x => x.FormId == latestFormId.Value && x.IsDeleted == false)
-                .Select(x => x.AccountId)
-                .ToListAsync();
-
-            var existingFormKeySet = new HashSet<int>(existingFormKeys);
+                .GroupBy(x => x.AccountId)
+                .Select(g => g.FirstOrDefault()) // Takes the default first record (usually oldest ID)
+                .ToDictionaryAsync(x => x.AccountId);
 
             var formsToActuallyInsert = new List<RenewableEnergyCustomForm>();
 
-            foreach (var newForm in newFormsToInsert)
+            // Filter incoming batch data to only process the first instance per account
+            var distinctFirstIncomingForms = newFormsToInsert
+                .GroupBy(f => f.AccountId)
+                .Select(g => g.First())
+                .ToList();
+
+            foreach (var newForm in distinctFirstIncomingForms)
             {
-                if (existingFormKeySet.Contains(newForm.AccountId))
+                bool isFormCompleted = newForm.IsCompleted;
+
+                if (existingFormsMap.TryGetValue(newForm.AccountId, out var existingForm))
                 {
-                    Console.WriteLine($"[DUPLICATE SKIP] Skipping FORM record for AccountId: {newForm.AccountId}. Record already exists in target table.");
-                    continue;
+                    // --- UPDATE TARGETED DEFAULT RECORD ---
+                    if (existingForm.IsCompleted != isFormCompleted)
+                    {
+                        existingForm.IsCompleted = isFormCompleted;
+                        existingForm.CompletedDate = isFormCompleted ? DateTime.UtcNow : null;
+                        existingForm.CompletedByUserId = newForm.CompletedByUserId;
+
+                        Console.WriteLine($"[UPDATE] Updated default form record (ID: {existingForm.Id}) for AccountId: {newForm.AccountId}.");
+                    }
                 }
-                formsToActuallyInsert.Add(newForm);
-                existingFormKeySet.Add(newForm.AccountId);
+                else
+                {
+                    // --- INSERT NEW RECORD ---
+                    formsToActuallyInsert.Add(newForm);
+                    existingFormsMap[newForm.AccountId] = newForm;
+                }
             }
 
-            _core365DbContext.RenewableEnergyCustomForms.AddRange(formsToActuallyInsert);
+            if (formsToActuallyInsert.Any())
+            {
+                _core365DbContext.RenewableEnergyCustomForms.AddRange(formsToActuallyInsert);
+            }
 
             await _core365DbContext.SaveChangesAsync();
         }
@@ -301,7 +323,7 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                 TenantId = sourceNtp.TenantId,
                 IsCompleted = isFormCompleted,
                 CompletedDate = completedDate,
-                CompletedByUserId = null,
+                CompletedByUserId = sourceNtp.ReviewUserId,
             };
         }
     }

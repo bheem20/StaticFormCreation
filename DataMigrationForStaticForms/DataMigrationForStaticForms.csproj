@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Dev_Nov_25_core365\core365\aspnet-core\src\Core365.EntityFrameworkCore\Core365.EntityFrameworkCore.csproj" />
-    <ProjectReference Include="..\..\Dev_Nov_25_core365\core365\aspnet-core\src\Core365.Core\Core365.Core.csproj" />
+    <ProjectReference Include="..\..\Post_Cad_Branch\aspnet-core\src\Core365.EntityFrameworkCore\Core365.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\Post_Cad_Branch\aspnet-core\src\Core365.Core\Core365.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

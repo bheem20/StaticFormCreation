@@ -397,7 +397,6 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                     ("Phone", DoorStepCustomControlTypeStrings.Phone, 3,  true, controlTypeIds.PhoneId, CustomFormDataBindingEnum.PrimaryCustomerPhoneNumber),
                     ("Email", DoorStepCustomControlTypeStrings.Email, 3,  true, controlTypeIds.EmailId, CustomFormDataBindingEnum.PrimaryCustomerEmail),
                     ("Customer Address", DoorStepCustomControlTypeStrings.AddressControl, 3,  true, controlTypeIds.AddressId, CustomFormDataBindingEnum.CustomerAddress),
-                    ("Copy From Lender", DoorStepCustomControlTypeStrings.Button, 3,  false, controlTypeIds.ButtonId, CustomFormDataBindingEnum.CopyFromLender),
                 };
 
                 foreach (var def in generalParentDefinitions)
@@ -1279,7 +1278,7 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                         CustomControlTypeId = def.controlTypeId
                     };
                     hoaInformationConditionalFieldsToCreate.Add(newConditionalField);
-
+                    
                     if (ntpMappingsDict.TryGetValue(def.title, out var optionsForBinding))
                     {
                         int optionOrderCounter = 1;
@@ -1346,13 +1345,13 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                 var hoaInformationParentDefinitions = new (string title, string type, int fieldType, bool isRequired, int controlTypeId, CustomFormDataBindingEnum? enumValue)[]
                 {
                     ("Was the Welcome Call successfully completed with Callpilot?", DoorStepCustomControlTypeStrings.SelectButton, 3,  true, controlTypeIds.SelectButtonId, null),
-                    ("Review Welcome Call", DoorStepCustomControlTypeStrings.Button, 3,  false, controlTypeIds.ButtonId, CustomFormDataBindingEnum.ReviewRecording),
-                    ("Send To Sales Rep (Email)", DoorStepCustomControlTypeStrings.Button, 3,  false, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendToSalesRepEmail),
-                    ("Send To Homeowner (Email)", DoorStepCustomControlTypeStrings.Button, 3,  false, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendToHomeownerEmail),
-                    ("Send To Sales Rep (SMS)", DoorStepCustomControlTypeStrings.Button, 3,  false, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendToSalesRepSMS),
-                    ("Send To Homeowner (SMS)", DoorStepCustomControlTypeStrings.Button, 3,  false, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendToHomeownerSMS),
-                    ("Promise Made", DoorStepCustomControlTypeStrings.TextMultiLine, 3,  false, controlTypeIds.TextMultiLineId, CustomFormDataBindingEnum.PromiseMadeActivityNotes),
-                    ("Save Note", DoorStepCustomControlTypeStrings.Button, 3,  false, controlTypeIds.ButtonId, CustomFormDataBindingEnum.PromiseMade),
+                    ("Review Welcome Call", DoorStepCustomControlTypeStrings.Button, 3,  false, controlTypeIds.ButtonId, CustomFormDataBindingEnum.ReviewWelcomeCall),
+                    ("Send To Sales Rep (Email)", DoorStepCustomControlTypeStrings.Button, 3,  false, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendSalesRepEmail),
+                    ("Send To Homeowner (Email)", DoorStepCustomControlTypeStrings.Button, 3,  false, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendHomeOwnerEmail),
+                    ("Send To Sales Rep (SMS)", DoorStepCustomControlTypeStrings.Button, 3,  false, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendSalesRepSms),
+                    ("Send To Homeowner (SMS)", DoorStepCustomControlTypeStrings.Button, 3,  false, controlTypeIds.ButtonId, CustomFormDataBindingEnum.SendHomeOwnerSms),
+                    ("Promise Made", DoorStepCustomControlTypeStrings.TextMultiLine, 3,  false, controlTypeIds.TextMultiLineId, CustomFormDataBindingEnum.PromisesMadeActivityNotes),
+                    ("Save Note", DoorStepCustomControlTypeStrings.Button, 3,  false, controlTypeIds.ButtonId, CustomFormDataBindingEnum.PromisesMade),
                 };
 
                 foreach (var def in hoaInformationParentDefinitions)
@@ -1445,7 +1444,7 @@ namespace DataMigrationForStaticForms.NTPFormCreation
                     bool hasGlobalOptions,
                     CustomFormDataBindingEnum enumValue)[]
                 {
-                    ("Conduct by Phone", DoorStepCustomControlTypeStrings.Button, false, "Was the Welcome Call successfully completed with Callpilot?", ntpMappings.Where(x => x.Title == "Was the Welcome Call successfully completed with Callpilot?").Select(x => x.FalseOptionName).FirstOrDefault(), controlTypeIds.ButtonId, false, CustomFormDataBindingEnum.ConductByPhone),
+                    ("Conduct Welcome Call", DoorStepCustomControlTypeStrings.Button, false, "Was the Welcome Call successfully completed with Callpilot?", ntpMappings.Where(x => x.Title == "Was the Welcome Call successfully completed with Callpilot?").Select(x => x.FalseOptionName).FirstOrDefault(), controlTypeIds.ButtonId, false, CustomFormDataBindingEnum.ConductWelcomeCallByPhone),
                };
 
 
